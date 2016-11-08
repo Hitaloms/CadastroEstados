@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Cadastro de Estado</title>
+        <link type="text/css" href="bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
+        <style>
+            #resultado tbody a {
+                cursor: pointer;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <hr>
+            <div class="row">
+                <form id="frm_estado_cad">
+                    <div class="form-group">
+                        <label for="uf">Sigla</label>
+                        <input type="text" class="form-control" id="uf" placeholder="Sigla" maxlength="2">
+                    </div>
+                    <div class="form-group">
+                        <label for="nome">Nome</label>
+                        <input type="text" class="form-control" id="nome" placeholder="Nome" maxlength="30">
+                    </div>
+                    <input class="btn btn-primary" id="addEstado" type="button" value="Cadastrar"> 
+                    <a href="ListarEstado.html"><button type="button" class="btn btn-primary">Listar Estados</button></a>
+                </form>
+                
+                
+            </div> 
+            <hr>        
+            
+        </div>
+        <script type="text/javascript" src="bootstrap/jquery-3.1.1.min.js"></script>
+        <script type="text/javascript" src="bootstrap/dist/js/bootstrap.js"></script>
+        <script>
+                $(function () {
+                $('#addEstado').bind('click', function () {
+                    var formulario = document.forms.frm_estado_cad;
+                    var uf   = formulario.uf;
+                    var nome = formulario.nome;
+                    if (nome.value.trim().length == 0 || uf.value.trim().length == 0) {
+                            return;
+                    }
+                    $.ajax({
+                        url         : '/estado',
+                        dataType    : 'json',
+                        method     : 'POST',
+                        contentType : 'application/json; charset=UTF-8',
+                        data: JSON.stringify({
+                            uf   : uf.value,
+                            nome : nome.value
+                        }),
+                        complete: function (data) {
+                            uf.value   = '';
+                            nome.value = '';
+                            alert('cadastrado');
+                            ListarEstados();
+                        }
+                    });
+                });
+              $('#alteraEstado').bind('click', function() {
+                    var oForm = document.forms.frm_estado_edit;
+                    if (oForm.nome.value.trim().length == 0 ) {
+                        return;
+                    }
+                    $('#modalEdit').modal('hide');
+                    $.ajax({
+                        url         : $(oForm).attr('target'),
+                        dataType    : 'json',
+                        method      : 'PATCH',
+                        contentType : 'application/json; charset=UTF-8',
+                        data : JSON.stringify({
+                            nome : oForm.nome.value
+                        }),
+                        complete: function (data) {
+                            ListarEstados();
+                        }
+                    });
+                });
+                
+                $('#modalEdit').on('show.bs.modal', function (event) {
+                    var button  = $(event.relatedTarget);
+                    var estado = button.data('info');
+                    var modal   = $(this);
+                    modal.find('#uf').val(estado.uf);
+                    modal.find('#nome').val(estado.nome);
+                    modal.find('#frm_estado_edit').attr('target', estado.url);
+                });
+                ListarEstados();
+            });  
+
+            
+             </script>    
+              
+    </body>
+</html>

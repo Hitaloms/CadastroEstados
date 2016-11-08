@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
+<html>
+    <head>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link type="text/css" href="bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
+        <style>
+            #resultado tbody a {
+                cursor: pointer;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <br>
+            <a href="estado.html"><button type="button" class="btn btn-primary">Cadastrar Novo</button></a>
+            <table class="table table-hover" id="resultado">
+                <thead>
+                    <tr>
+                        <td><strong>UF</strong></td>
+                        <td><strong>Nome</strong></td>
+                        <td><strong></strong></td>
+                        <td><strong></strong></td>
+                    </tr>
+                </thead>
+            </table>
+            <div class="modal fade" id="modalEdit" tabindex="-1" role="dialog" aria-labelledby="modalEditLabel">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                            <h4 class="modal-title" id="modalEditLabel">Alterar Estado</h4>
+                        </div>
+                        <div class="modal-body">
+                            <form id="frm_estado_edit" target="#">
+                                <div class="form-group">
+                                    <label for="uf">Sigla</label>
+                                    <input type="text" class="form-control" id="uf"  placeholder="Sigla" maxlength="2">
+                                </div>
+                                <div class="form-group">
+                                    <label for="nome">Nome</label>
+                                    <input type="text" class="form-control" id="nome" placeholder="Nome" maxlength="30">
+                                </div>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                        
+                            <button type="button" class="btn btn-primary" id="alteraEstado">Alterar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <a href="estado.html"><button type="button" class="btn btn-primary">Cadastrar Novo</button></a>
+            <br>
+        </div>
+     <script type="text/javascript" src="bootstrap/jquery-3.1.1.min.js"></script>
+        <script type="text/javascript" src="bootstrap/dist/js/bootstrap.js"></script>
+        <script>
+            $(function () {            
+                $('#alteraEstado').bind('click', function () {
+                    var oForm = document.forms.frm_estado_edit;
+                    if (oForm.nome.value.trim().length == 0) {
+                        return;
+                    }
+                    $('#modalEdit').modal('hide');
+                    $.ajax({
+                        url: $(oForm).attr('target'),
+                        dataType: 'json',
+                        method: 'PATCH',
+                        contentType: 'application/json; charset=UTF-8',
+                        data: JSON.stringify({
+                            nome: oForm.nome.value
+                        }),
+                        complete: function (data) {
+                            ListarEstados();
+                        }
+                    });
+                });
+
+                $('#modalEdit').on('show.bs.modal', function (event) {
+                    var button = $(event.relatedTarget);
+                    var oEstado = button.data('info');
+                    var modal = $(this);
+                    modal.find('#uf').val(oEstado.uf);
+                    modal.find('#nome').val(oEstado.nome);
+                    modal.find('#frm_estado_edit').attr('target', oEstado.url);
+                });
+                ListarEstados();
+            });
+
+
+
+            function ListarEstados() {
+                $.getJSON('/estado?page=0&size=1000', function (data) {
+                    var estado = data._embedded.estado;
+                    var auxEstado = $('#resultado');
+                    if (auxEstado.get(0).tBodies.length > 0) {
+                        var aLinhas = auxEstado.get(0).tBodies;
+                        for (var i = 0; i < aLinhas.length; i++) {
+                            var remove = auxEstado.get(0).removeChild(aLinhas[i]);
+                            remove = null;
+                        }
+                    }
+                    if (estado.length === 0) {
+                        return;
+                    }
+                    var oTBody = $(document.createElement('tbody'));
+                    for (var i = 0; i < estado.length; i++) {
+                        var Aux = estado[i];
+                        var url = Aux._links.self.href;
+                        var html = '<tr><td>' + Aux.uf + '</td><td>' + Aux.nome + '</td>';
+                        html += '<td>' + getBtnEditModal(Aux.uf, Aux.nome, url) + '</td>';
+                        html += '<td>' + getBtnDelete(url) + '</td>';
+                        html += '</tr>';
+                        oTBody.append($(html));
+                    }
+                    oTBody.appendTo(auxEstado);
+                });
+
+                function getBtnDelete(url) {
+                    return '<button type="button" class="btn btn-danger" onclick="apagarEstado(\'' + url + '\');">Apagar</button>';
+                }
+
+                function getBtnEditModal(uf, nome, urlEstado) {
+                    var estado = JSON.stringify({
+                        uf: uf, nome: nome,
+                        url: urlEstado
+                    });
+                    return '<button type="button" class="btn btn-primary" data-toggle="modal" data-target="#modalEdit" data-info=\'' + estado + '\'>Alterar</button>';
+                }
+            }
+
+            function apagarEstado(urlEstado) {
+                console.log(urlEstado);
+                $.ajax({
+                    url: urlEstado,
+                    type: 'delete',
+                    complete: function (data) {
+                        ListarEstados();
+                    }
+                });
+            }
+        </script> 
+
+    </body>
+</html>
